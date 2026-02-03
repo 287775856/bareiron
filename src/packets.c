@@ -1130,6 +1130,8 @@ int cs_chat (int client_fd) {
   size_t message_len = strlen((char *)recv_buffer);
   uint8_t name_len = strlen(player->name);
 
+  log_chat_message(client_fd, player->name, (char *)recv_buffer, message_len);
+
   if (recv_buffer[0] != '!') { // Standard chat message
 
     // Shift message contents forward to make space for player name tag
