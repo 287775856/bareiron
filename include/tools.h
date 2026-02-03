@@ -39,6 +39,8 @@ void readStringN (int client_fd, uint32_t max_length);
 
 uint32_t fast_rand ();
 uint64_t splitmix64 (uint64_t state);
+int get_client_ip (int client_fd, char *buffer, size_t buffer_len);
+void log_chat_message (int client_fd, const char *username, const char *message, size_t message_len);
 
 #ifdef ESP_PLATFORM
   #include "esp_timer.h"

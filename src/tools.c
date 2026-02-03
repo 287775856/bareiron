@@ -282,6 +282,42 @@ uint64_t splitmix64 (uint64_t state) {
   return z ^ (z >> 31);
 }
 
+int get_client_ip (int client_fd, char *buffer, size_t buffer_len) {
+  if (buffer == NULL || buffer_len == 0) return 1;
+  struct sockaddr_storage addr;
+  socklen_t addr_len = sizeof(addr);
+  if (getpeername(client_fd, (struct sockaddr *)&addr, &addr_len) != 0) return 1;
+  if (addr.ss_family == AF_INET) {
+    struct sockaddr_in *addr_v4 = (struct sockaddr_in *)&addr;
+    if (inet_ntop(AF_INET, &addr_v4->sin_addr, buffer, (socklen_t)buffer_len) == NULL) return 1;
+    return 0;
+  }
+  if (addr.ss_family == AF_INET6) {
+    struct sockaddr_in6 *addr_v6 = (struct sockaddr_in6 *)&addr;
+    if (inet_ntop(AF_INET6, &addr_v6->sin6_addr, buffer, (socklen_t)buffer_len) == NULL) return 1;
+    return 0;
+  }
+  return 1;
+}
+
+void log_chat_message (int client_fd, const char *username, const char *message, size_t message_len) {
+  if (username == NULL || message == NULL) return;
+  FILE *file = fopen("chat.log", "a");
+  if (file == NULL) return;
+  char ip[INET6_ADDRSTRLEN];
+  if (get_client_ip(client_fd, ip, sizeof(ip)) != 0) {
+    strncpy(ip, "unknown", sizeof(ip));
+    ip[sizeof(ip) - 1] = '\0';
+  }
+  int64_t timestamp = get_program_time();
+  fprintf(file, "[%lld] %s (%s): ", (long long)timestamp, username, ip);
+  if (message_len > 0) {
+    fwrite(message, 1, message_len, file);
+  }
+  fputc('\n', file);
+  fclose(file);
+}
+
 #ifndef ESP_PLATFORM
 // Returns system time in microseconds.
 // On ESP-IDF, this is available in "esp_timer.h", and returns time *since
